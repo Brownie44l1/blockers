@@ -99,10 +99,10 @@ func factorial(n int) {
 
 
 
-func main() {
+/* func main() {
 	variableAndTypes()
 	swap()
 	revString()
 	fib(4)
 	factorial(5)
-}
+} */
