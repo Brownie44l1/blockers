@@ -14,7 +14,7 @@ type Student struct {
 
 var students = make(map[string]Student)
 
-func add() {
+func addStudent() {
 	if len(os.Args) < 5 {
 		fmt.Println("USAGE <go run main.go add {name} {age} {location}")
 	}
@@ -22,26 +22,40 @@ func add() {
 	age, _ := strconv.Atoi(os.Args[3])
 	location := os.Args[4]
 
-	students[name] = Student{name: name, age: age, location: location}
-	fmt.Println("Student added:", students[name])
+	studentStruct := Student{name: name, age: age, location: location}
+	students[name] = studentStruct
+	fmt.Println("Student added: ", students[name])
 }
 
-func update() {
+func updateStudent() {
 	if len(os.Args) < 5 {
 		fmt.Println("USAGE <go run main.go update {name} [new data]")
 	}
+	name := os.Args[2]
+	age, _ := strconv.Atoi(os.Args[3])
+	location := os.Args[4]
+	students[name] = Student{name: name, age: age, location: location}
 }
 
 func displayStudent() {
-	if len(os.Args) < 5 {
+	if len(os.Args) < 3 {
 		fmt.Println("USAGE <go run main.go displayStudent {name}")
+	}
+	name := os.Args[2]
+	if student, ok := students[name]; ok {
+		fmt.Printf("Name: %s, Age: %d, Location: %s\n", student.name, student.age, student.location)
+	} else {
+		fmt.Println("Student not found")
 	}
 }
 
-func delete() {
-	if len(os.Args) < 5 {
+func deleteStudent() {
+	if len(os.Args) < 3 {
 		fmt.Println("USAGE <go run main.go delete {name} ")
 	}
+	name := os.Args[2]
+	delete(students, name)
+	fmt.Println("Deleted:", name)
 }
 
 func quit() {
@@ -58,15 +72,17 @@ func main() {
 	for {
 		switch os.Args[1] {
 		case "add":
-			add()
+			addStudent()
 		case "update":
-			update()
+			updateStudent()
 		case "displayStudent":
 			displayStudent()
 		case "delete":
-			delete()
+			deleteStudent()
 		case "quit":
 			quit()
+		default:
+			fmt.Println("Unknown Command")
 		}
 	}
 }
