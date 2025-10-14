@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -27,14 +28,14 @@ func addBook(parts []string) {
 	title := parts[1]
 	author := parts[2]
 	year := parts[3]
-	available := true
 
 	//slice implementation
-	b := Book{title: title, author: author, year: year, available: available}
+	b := Book{title: title, author: author, year: year, available: true}
 	books = append(books, b)
 
 	//map implementation
 	bkMap[title] = b 
+	fmt.Println("Book added: ", b)
 }
 
 func updateBook(parts []string) {
@@ -45,7 +46,12 @@ func updateBook(parts []string) {
 	title := parts[1]
 	author := parts[2]
 	year := parts[3]
-	available, _ := strconv.ParseBool(parts[4])
+	available, err := strconv.ParseBool(parts[4])
+
+	if err != nil {
+		fmt.Println("Invalid availability value (use true/false)")
+		return
+	}
 
 	//map implementation
 	bkMap[title] = Book{title: title, author: author, year: year, available: available}
@@ -54,8 +60,10 @@ func updateBook(parts []string) {
 	for i := range books {
 		if books[i].title == title {
 			books[i] = bkMap[title]
+			break
 		}
 	}
+	fmt.Println("Book Updated: ", bkMap[title])
 }
 
 func deleteBook(parts []string) {
@@ -72,8 +80,10 @@ func deleteBook(parts []string) {
 	for i, s := range books {
 		if s.title == title {
 			books = append(books[:i], books[i+1:]...)
+			break
 		}
 	}
+	fmt.Println("Book delected: ", bkMap[title])
 }
 
 func displayBook(parts []string) {
@@ -85,34 +95,19 @@ func displayBook(parts []string) {
 	title := parts[1]
 	
 	//slice implementation
+	fmt.Println("Displaying book requested")
 	for _, s := range books {
 		if s.title == title {
-			fmt.Printf("Title: %s, Author: %s, Year: %s, Available: %t", s.title, s.author, s.year, s.available)
+			fmt.Printf("Title: %s, Author: %s, Year: %s, Available: %t\n", s.title, s.author, s.year, s.available)
 		}
-	}
-
-	//map implementation
-	if b, exist := bkMap[title]; exist {
-		fmt.Printf("Title: %s, Author: %s, Year: %s, Available: %t", b.title, b.author, b.year, b.available)
-	} else {
-		fmt.Println("Book not found")
 	}
 }
 
-func listBooks(parts []string) {
-	if len(parts) < 1 {
-		fmt.Println("USAGE: list")
-		return
-	}
-
-	//slice implementation
-	for _, s := range books {
-		fmt.Printf("Title: %s, Author: %s, Year: %s, Available: %t", s.title, s.author, s.year, s.available)
-	}
-
+func listBooks() {
+	fmt.Println("Displaying all books")
 	//map implementation
 	for i, b := range bkMap {
-		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}", i, b.title, b.author, b.year, b.available)
+		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", i, b.title, b.author, b.year, b.available)
 	}
 }
 
@@ -132,9 +127,11 @@ func borrowBook(parts []string) {
 	}
 
 	//map implementation
-	bk := bkMap[title]
-	bk.available = false
-	bkMap[title] = bk 
+	if bk, ok := bkMap[title]; ok {
+		bk.available = false
+		bkMap[title] = bk
+	}
+	fmt.Println("Book borrowed: ", bkMap[title].title)
 }
 
 func returnBook(parts []string) {
@@ -153,17 +150,20 @@ func returnBook(parts []string) {
 	}
 
 	//map implementation
-	bk := bkMap[title]
-	bk.available = true
-	bkMap[title] = bk 
+	if bk, ok := bkMap[title]; ok {
+		bk.available = true
+		bkMap[title] = bk
+	}
+	fmt.Println("Book Returned: ", bkMap[title].title)
 }
 
 func main() {
-	scanner := bufio.NewScanner()
+	scanner := bufio.NewScanner(os.Stdin)
 	
 	for {
+		fmt.Println("Enter Command: ")
 		if !scanner.Scan() {
-			fmt.Println("Invalid input")
+			break
 		}
 		line := scanner.Text()
 		if line == "" {
@@ -182,7 +182,7 @@ func main() {
 		case "display":
 			displayBook(text)
 		case "list":
-			listBooks(text)
+			listBooks()
 		case "borrow":
 			borrowBook(text)
 		case "return":
@@ -195,12 +195,3 @@ func main() {
 		}
 	}
 }
-
-/* addBook {title} {author} {year} — adds a new book and sets available = true.
-updateBook {title} {new_author} {new_year} — updates details
-deleteBook {title} — removes from collection.
-displayBook {title} — prints book details.
-listBooks — prints all stored books.
-borrowBook {title} — marks book as unavailable.
-returnBook {title} — marks as available again.
-quit — exits. */
