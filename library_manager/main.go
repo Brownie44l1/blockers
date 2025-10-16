@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -65,6 +66,7 @@ func (l *Library) updateBook(parts []string) {
 		fmt.Println("Book Updated:", book)
 	} else {
 		fmt.Println("Book not found for ISBN:", isbn)
+		return
 	}
 }
 
@@ -74,11 +76,16 @@ func (l *Library) deleteBook(parts []string) {
 		return
 	}
 	isbn := parts[1]
-	fmt.Println("Book delected: ", l.books[isbn])
-	delete(l.books, isbn)
+
+	if _, exists := l.books[isbn]; exists {
+		fmt.Println("Book delected: ", l.books[isbn])
+		delete(l.books, isbn)
+	} else {
+		fmt.Println("Book not found")
+	}
 }
 
-func (l Library) displayBook(parts []string) {
+func (l *Library) displayBook(parts []string) {
 	if len(parts) < 2 {
 		fmt.Println("USAGE: display {isbn}")
 		return
@@ -86,10 +93,12 @@ func (l Library) displayBook(parts []string) {
 	isbn := parts[1]
 	if book, exists := l.books[isbn]; exists {
 		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", book.isbn, book.title, book.author, book.year, book.available)
+	} else {
+		fmt.Println("Book not found")
 	}
 }
 
-func (l Library) listBooks() {
+func (l *Library) listBooks() {
 	fmt.Println("Displaying all books")
 	for isbn, book := range l.books {
 		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", isbn, book.title, book.author, book.year, book.available)
@@ -128,8 +137,51 @@ func (l *Library) returnBook(parts []string) {
 	}
 }
 
+func (l *Library) load(parts []string) {
+	if len(parts) < 2 {
+		fmt.Println("USAGE: load {filename}")
+	}
+	filename := parts[1]
+	l.readFromFile(filename)
+}
+
+func (l *Library) save(parts []string) {
+	if len(parts) < 2 {
+		fmt.Println("USAGE: save {filename}")
+	}
+	filename := parts[1]
+	l.saveToFile(filename)
+}
+
+func (l *Library) saveToFile(filename string) {
+	data, _ := json.MarshalIndent(l.books, "", "  ")
+	err := os.WriteFile(filename, data, 0644)
+
+	if err != nil {
+		fmt.Println("Failed to write to file")
+	}
+}
+
+func (l *Library) readFromFile(filename string) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Println("No existing library file found, starting fresh.")
+			return
+		}
+		fmt.Println("Error reading file:", err)
+		return
+	}
+
+	errJson := json.Unmarshal(data, &l.books)
+	if errJson != nil {
+		fmt.Println("failed to decode json:", errJson)
+	}
+}
+
 func main() {
 	lib := &Library{books: make(map[string]*Book)}
+	lib.readFromFile("library.json")
 	scanner := bufio.NewScanner(os.Stdin)
 	
 	for {
@@ -163,7 +215,12 @@ func main() {
 			lib.borrowBook(text)
 		case "return":
 			lib.returnBook(text)
+		case "load":
+			lib.load(text)
+		case "save":
+			lib.save(text)
 		case "quit":
+			lib.save([]string{"save", "library.json"})
 			fmt.Println("Exiting....")
 			return
 		default:
