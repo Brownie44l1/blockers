@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-func sort_bubble(arr []int) {
+func sortBubble(arr []int) {
 	n := len(arr)
 	flag := true
 	for flag {
@@ -15,11 +15,26 @@ func sort_bubble(arr []int) {
 		}
 		n -= 1 
 	}
-	fmt.Println(arr)
+}
+
+func selectionSort(arr []int) {
+	for i := 0; i < len(arr) - 1; i++ {
+		minIndex := i
+		for j := i + 1; j < len(arr); j++ {
+			if arr[minIndex] > arr [j] {
+				minIndex = j
+			}
+		}
+		arr[i], arr[minIndex] = arr[minIndex], arr[i]
+	}
 }
 
 func main() {
 	fmt.Println("let's test this shit out")
 	arr := []int{-5, 3, 2, 1, -3, -3, 7, 2, -2}
-	sort_bubble(arr)
+	sortBubble(arr)
+
+	arr1 := []int{64, 25, 12, 22, 11}
+	selectionSort(arr1)
+	fmt.Println(arr1)
 }
