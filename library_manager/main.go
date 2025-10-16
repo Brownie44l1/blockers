@@ -5,37 +5,31 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 )
 
 type Book struct {
+	isbn string
 	title     string
 	author    string
 	year      string
 	available bool
 }
 
-var (
-	books []Book
-	bkMap = make(map[string]Book)
-)
+var books = make(map[string]*Book)
 
 func addBook(parts []string) {
 	if len(parts) < 4 {
 		fmt.Println("USAGE: add {title} {author} {year}")
 		return
 	}
-	title := parts[1]
-	author := parts[2]
-	year := parts[3]
 
-	//slice implementation
-	b := Book{title: title, author: author, year: year, available: true}
-	books = append(books, b)
-
-	//map implementation
-	bkMap[title] = b 
-	fmt.Println("Book added: ", b)
+	isbn := parts[1]
+	title := parts[2]
+	author := parts[3]
+	year := parts[4]
+	
+	books[title] = &Book{isbn: isbn, title: title, author: author, year: year, available: true}
+	fmt.Println("Book Added: ", books[isbn])
 }
 
 func updateBook(parts []string) {
@@ -43,118 +37,79 @@ func updateBook(parts []string) {
 		fmt.Println("USAGE: update {title} {author} {year} {available}")
 		return
 	}
-	title := parts[1]
-	author := parts[2]
-	year := parts[3]
-	available, err := strconv.ParseBool(parts[4])
+	isbn := parts[1]
+	title := parts[2]
+	author := parts[3]
+	year := parts[4]
+	available, err := strconv.ParseBool(parts[5])
 
 	if err != nil {
 		fmt.Println("Invalid availability value (use true/false)")
 		return
 	}
 
-	//map implementation
-	bkMap[title] = Book{title: title, author: author, year: year, available: available}
-
-	//slice implementation
-	for i := range books {
-		if books[i].title == title {
-			books[i] = bkMap[title]
-			break
-		}
-	}
-	fmt.Println("Book Updated: ", bkMap[title])
+	books[isbn] = &Book{isbn: isbn, title: title, author: author, year: year, available: available}
+	fmt.Println("Book Updated: ", books[isbn])
 }
 
 func deleteBook(parts []string) {
 	if len(parts) < 2 {
-		fmt.Println("USAGE: delete {title}")
+		fmt.Println("USAGE: delete {isbn}")
 		return
 	}
-	title := parts[1]
-
-	//map implementation
-	delete(bkMap, title)
-
-	//slice implementation
-	for i, s := range books {
-		if s.title == title {
-			books = append(books[:i], books[i+1:]...)
-			break
-		}
-	}
-	fmt.Println("Book delected: ", bkMap[title])
+	isbn := parts[1]
+	delete(books, isbn)
+	fmt.Println("Book delected: ", books[isbn])
 }
 
 func displayBook(parts []string) {
 	if len(parts) < 2 {
-		fmt.Println("USAGE: display {title}")
+		fmt.Println("USAGE: display {isbn}")
 		return
 	}
-
-	title := parts[1]
-	
-	//slice implementation
-	fmt.Println("Displaying book requested")
-	for _, s := range books {
-		if s.title == title {
-			fmt.Printf("Title: %s, Author: %s, Year: %s, Available: %t\n", s.title, s.author, s.year, s.available)
-		}
+	isbn := parts[1]
+	if book, exists := books[isbn]; exists {
+		fmt.Println("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", book.isbn, book.title, book.author, book.year, book.available)
 	}
 }
 
 func listBooks() {
 	fmt.Println("Displaying all books")
-	//map implementation
-	for i, b := range bkMap {
+	for i, b := range books {
 		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", i, b.title, b.author, b.year, b.available)
 	}
 }
 
 func borrowBook(parts []string) {
 	if len(parts) < 2 {
-		fmt.Println("USAGE: borrow {title}")
+		fmt.Println("USAGE: borrow {isbn}")
 		return
 	}
 
-	title := parts[1]
+	isbn := parts[1]
 
-	//slice implementation (using index becuase we need to modify the value itself and not just a copy if we use the value/element.)
-	for i := range books {
-		if books[i].title == title {
-			books[i].available = false
-		}
+	if book, ok := books[isbn]; ok {
+		book.available = false
+	} else {
+		fmt.Println("Book does not exist")
 	}
-
-	//map implementation
-	if bk, ok := bkMap[title]; ok {
-		bk.available = false
-		bkMap[title] = bk
-	}
-	fmt.Println("Book borrowed: ", bkMap[title].title)
+	fmt.Println("Book borrowed: ", books[isbn].title)
 }
 
 func returnBook(parts []string) {
 	if len(parts) < 2 {
-		fmt.Println("USAGE: return {title}")
+		fmt.Println("USAGE: return {isbn}")
 		return
 	}
 
-	title := parts[1]
+	isbn := parts[1]
 
-	//slice implementation
-	for i := range books {
-		if books[i].title == title {
-			books[i].available = true
-		}
+	if book, ok := books[isbn]; ok {
+		book.available = true
+	} else {
+		fmt.Println("Book does not exist")
 	}
-
-	//map implementation
-	if bk, ok := bkMap[title]; ok {
-		bk.available = true
-		bkMap[title] = bk
-	}
-	fmt.Println("Book Returned: ", bkMap[title].title)
+	fmt.Println("Book Returned: ", books[isbn].title)
 }
 
 func main() {
@@ -169,7 +124,7 @@ func main() {
 		if line == "" {
 			continue
 		}
-		text := strings.Fields(line)
+		//text := strings.Fields(line)
 		cmd := text[0]
 
 		switch cmd {
