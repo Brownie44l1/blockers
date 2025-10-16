@@ -8,6 +8,10 @@ import (
 	"github.com/google/shlex"
 )
 
+type Library struct {
+	books map[string]*Book 
+}
+
 type Book struct {
 	isbn string
 	title     string
@@ -16,9 +20,7 @@ type Book struct {
 	available bool
 }
 
-var books = make(map[string]*Book)
-
-func addBook(parts []string) {
+func (l *Library) addBook(parts []string) {
 	if len(parts) < 5 {
 		fmt.Println("USAGE: add {isbn} {title} {author} {year}")
 		return
@@ -29,11 +31,11 @@ func addBook(parts []string) {
 	author := parts[3]
 	year := parts[4]
 	
-	books[isbn] = &Book{isbn: isbn, title: title, author: author, year: year, available: true}
-	fmt.Println("Book Added: ", books[isbn])
+	l.books[isbn] = &Book{isbn: isbn, title: title, author: author, year: year, available: true}
+	fmt.Println("Book Added: ", l.books[isbn])
 }
 
-func updateBook(parts []string) {
+func (l *Library) updateBook(parts []string) {
 	if len(parts) < 6 {
 		fmt.Println("USAGE: update {isbn} {title} {author} {year} {available}")
 		return
@@ -49,7 +51,7 @@ func updateBook(parts []string) {
 		return
 	}
 
-	if book, ok := books[isbn]; ok {
+	if book, ok := l.books[isbn]; ok {
 		if title != "" {
 			book.title = title
 		}
@@ -59,44 +61,42 @@ func updateBook(parts []string) {
 		if year != "" {
 			book.year = year
 		}
-		if year != "" {
-			book.available = available
-		}
+		book.available = available
+		fmt.Println("Book Updated:", book)
+	} else {
+		fmt.Println("Book not found for ISBN:", isbn)
 	}
-	
-	//books[isbn] = &Book{isbn: isbn, title: title, author: author, year: year, available: available}
-	fmt.Println("Book Updated: ", books[isbn])
 }
 
-func deleteBook(parts []string) {
+func (l *Library) deleteBook(parts []string) {
 	if len(parts) < 2 {
 		fmt.Println("USAGE: delete {isbn}")
 		return
 	}
 	isbn := parts[1]
-	fmt.Println("Book delected: ", books[isbn])
-	delete(books, isbn)
+	fmt.Println("Book delected: ", l.books[isbn])
+	delete(l.books, isbn)
 }
 
-func displayBook(parts []string) {
+func (l Library) displayBook(parts []string) {
 	if len(parts) < 2 {
 		fmt.Println("USAGE: display {isbn}")
 		return
 	}
 	isbn := parts[1]
-	if book, exists := books[isbn]; exists {
+	if book, exists := l.books[isbn]; exists {
 		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", book.isbn, book.title, book.author, book.year, book.available)
 	}
 }
 
-func listBooks() {
+func (l Library) listBooks() {
 	fmt.Println("Displaying all books")
-	for isbn, book := range books {
+	for isbn, book := range l.books {
 		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", isbn, book.title, book.author, book.year, book.available)
 	}
 }
 
-func borrowBook(parts []string) {
+func (l *Library) borrowBook(parts []string) {
 	if len(parts) < 2 {
 		fmt.Println("USAGE: borrow {isbn}")
 		return
@@ -104,7 +104,7 @@ func borrowBook(parts []string) {
 
 	isbn := parts[1]
 
-	if book, ok := books[isbn]; ok {
+	if book, ok := l.books[isbn]; ok {
 		book.available = false
 		fmt.Println("Book borrowed: ", book.title)
 	} else {
@@ -112,7 +112,7 @@ func borrowBook(parts []string) {
 	}
 }
 
-func returnBook(parts []string) {
+func (l *Library) returnBook(parts []string) {
 	if len(parts) < 2 {
 		fmt.Println("USAGE: return {isbn}")
 		return
@@ -120,7 +120,7 @@ func returnBook(parts []string) {
 
 	isbn := parts[1]
 
-	if book, ok := books[isbn]; ok {
+	if book, ok := l.books[isbn]; ok {
 		book.available = true
 		fmt.Println("Book Returned: ", book.title)
 	} else {
@@ -129,6 +129,7 @@ func returnBook(parts []string) {
 }
 
 func main() {
+	lib := &Library{books: make(map[string]*Book)}
 	scanner := bufio.NewScanner(os.Stdin)
 	
 	for {
@@ -149,19 +150,19 @@ func main() {
 
 		switch cmd {
 		case "add":
-			addBook(text)
+			lib.addBook(text)
 		case "update":
-			updateBook(text)
+			lib.updateBook(text)
 		case "delete":
-			deleteBook(text)
+			lib.deleteBook(text)
 		case "display":
-			displayBook(text)
+			lib.displayBook(text)
 		case "list":
-			listBooks()
+			lib.listBooks()
 		case "borrow":
-			borrowBook(text)
+			lib.borrowBook(text)
 		case "return":
-			returnBook(text)
+			lib.returnBook(text)
 		case "quit":
 			fmt.Println("Exiting....")
 			return
