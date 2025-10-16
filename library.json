@@ -1,0 +1,23 @@
+{
+  "1001": {
+    "isbn": "1001",
+    "title": "Go programming: A beginner guide",
+    "author": "John Doe",
+    "year": "2022",
+    "available": true
+  },
+  "1002": {
+    "isbn": "1002",
+    "title": "Python Basics",
+    "author": "Alice",
+    "year": "2021",
+    "available": true
+  },
+  "1003": {
+    "isbn": "1003",
+    "title": "Atomic Habits",
+    "author": "James Clear",
+    "year": "2018",
+    "available": true
+  }
+}

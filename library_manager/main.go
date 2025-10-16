@@ -14,11 +14,11 @@ type Library struct {
 }
 
 type Book struct {
-	isbn string
-	title     string
-	author    string
-	year      string
-	available bool
+    ISBN      string `json:"isbn"`
+    Title     string `json:"title"`
+    Author    string `json:"author"`
+    Year      string `json:"year"`
+    Available bool   `json:"available"`
 }
 
 func (l *Library) addBook(parts []string) {
@@ -32,7 +32,7 @@ func (l *Library) addBook(parts []string) {
 	author := parts[3]
 	year := parts[4]
 	
-	l.books[isbn] = &Book{isbn: isbn, title: title, author: author, year: year, available: true}
+	l.books[isbn] = &Book{ISBN: isbn, Title: title, Author: author, Year: year, Available: true}
 	fmt.Println("Book Added: ", l.books[isbn])
 }
 
@@ -54,15 +54,15 @@ func (l *Library) updateBook(parts []string) {
 
 	if book, ok := l.books[isbn]; ok {
 		if title != "" {
-			book.title = title
+			book.Title = title
 		}
 		if author != "" {
-			book.author = author
+			book.Author = author
 		}
 		if year != "" {
-			book.year = year
+			book.Year = year
 		}
-		book.available = available
+		book.Available = available
 		fmt.Println("Book Updated:", book)
 	} else {
 		fmt.Println("Book not found for ISBN:", isbn)
@@ -92,7 +92,7 @@ func (l *Library) displayBook(parts []string) {
 	}
 	isbn := parts[1]
 	if book, exists := l.books[isbn]; exists {
-		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", book.isbn, book.title, book.author, book.year, book.available)
+		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", book.ISBN, book.Title, book.Author, book.Year, book.Available)
 	} else {
 		fmt.Println("Book not found")
 	}
@@ -101,7 +101,7 @@ func (l *Library) displayBook(parts []string) {
 func (l *Library) listBooks() {
 	fmt.Println("Displaying all books")
 	for isbn, book := range l.books {
-		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", isbn, book.title, book.author, book.year, book.available)
+		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", isbn, book.Title, book.Author, book.Year, book.Available)
 	}
 }
 
@@ -114,8 +114,8 @@ func (l *Library) borrowBook(parts []string) {
 	isbn := parts[1]
 
 	if book, ok := l.books[isbn]; ok {
-		book.available = false
-		fmt.Println("Book borrowed: ", book.title)
+		book.Available = false
+		fmt.Println("Book borrowed: ", book.Title)
 	} else {
 		fmt.Println("Book does not exist")
 	}
@@ -130,8 +130,8 @@ func (l *Library) returnBook(parts []string) {
 	isbn := parts[1]
 
 	if book, ok := l.books[isbn]; ok {
-		book.available = true
-		fmt.Println("Book Returned: ", book.title)
+		book.Available = true
+		fmt.Println("Book Returned: ", book.Title)
 	} else {
 		fmt.Println("Book does not exist")
 	}
@@ -140,6 +140,7 @@ func (l *Library) returnBook(parts []string) {
 func (l *Library) load(parts []string) {
 	if len(parts) < 2 {
 		fmt.Println("USAGE: load {filename}")
+		return
 	}
 	filename := parts[1]
 	l.readFromFile(filename)
@@ -148,18 +149,26 @@ func (l *Library) load(parts []string) {
 func (l *Library) save(parts []string) {
 	if len(parts) < 2 {
 		fmt.Println("USAGE: save {filename}")
+		return
 	}
 	filename := parts[1]
 	l.saveToFile(filename)
 }
 
 func (l *Library) saveToFile(filename string) {
-	data, _ := json.MarshalIndent(l.books, "", "  ")
-	err := os.WriteFile(filename, data, 0644)
-
-	if err != nil {
-		fmt.Println("Failed to write to file")
+	data, errJson := json.MarshalIndent(l.books, "", "  ")
+	if errJson != nil {
+		fmt.Println("Error marshaling data:", errJson)
+		return
 	}
+
+	err := os.WriteFile(filename, data, 0644)
+	if err != nil {
+		fmt.Println("Failed to write to file:", err)
+		return
+	}
+
+	fmt.Println("Library saved to", filename)
 }
 
 func (l *Library) readFromFile(filename string) {
@@ -173,10 +182,15 @@ func (l *Library) readFromFile(filename string) {
 		return
 	}
 
+	if l.books == nil {
+		l.books = make(map[string]*Book)
+	}
+
 	errJson := json.Unmarshal(data, &l.books)
 	if errJson != nil {
 		fmt.Println("failed to decode json:", errJson)
 	}
+	fmt.Println("Library loaded from", filename)
 }
 
 func main() {
@@ -185,7 +199,7 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	
 	for {
-		fmt.Println("Enter Command: ")
+		fmt.Println("\nEnter Command: ")
 		if !scanner.Scan() {
 			break
 		}
