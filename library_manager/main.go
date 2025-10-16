@@ -49,7 +49,22 @@ func updateBook(parts []string) {
 		return
 	}
 
-	books[isbn] = &Book{isbn: isbn, title: title, author: author, year: year, available: available}
+	if book, ok := books[isbn]; ok {
+		if title != "" {
+			book.title = title
+		}
+		if author != "" {
+			book.author = author
+		}
+		if year != "" {
+			book.year = year
+		}
+		if year != "" {
+			book.available = available
+		}
+	}
+	
+	//books[isbn] = &Book{isbn: isbn, title: title, author: author, year: year, available: available}
 	fmt.Println("Book Updated: ", books[isbn])
 }
 
