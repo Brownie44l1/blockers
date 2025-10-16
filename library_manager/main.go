@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"github.com/google/shlex"
 )
 
 type Book struct {
@@ -18,8 +19,8 @@ type Book struct {
 var books = make(map[string]*Book)
 
 func addBook(parts []string) {
-	if len(parts) < 4 {
-		fmt.Println("USAGE: add {title} {author} {year}")
+	if len(parts) < 5 {
+		fmt.Println("USAGE: add {isbn} {title} {author} {year}")
 		return
 	}
 
@@ -28,13 +29,13 @@ func addBook(parts []string) {
 	author := parts[3]
 	year := parts[4]
 	
-	books[title] = &Book{isbn: isbn, title: title, author: author, year: year, available: true}
+	books[isbn] = &Book{isbn: isbn, title: title, author: author, year: year, available: true}
 	fmt.Println("Book Added: ", books[isbn])
 }
 
 func updateBook(parts []string) {
-	if len(parts) < 5 {
-		fmt.Println("USAGE: update {title} {author} {year} {available}")
+	if len(parts) < 6 {
+		fmt.Println("USAGE: update {isbn} {title} {author} {year} {available}")
 		return
 	}
 	isbn := parts[1]
@@ -58,8 +59,8 @@ func deleteBook(parts []string) {
 		return
 	}
 	isbn := parts[1]
-	delete(books, isbn)
 	fmt.Println("Book delected: ", books[isbn])
+	delete(books, isbn)
 }
 
 func displayBook(parts []string) {
@@ -69,14 +70,14 @@ func displayBook(parts []string) {
 	}
 	isbn := parts[1]
 	if book, exists := books[isbn]; exists {
-		fmt.Println("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", book.isbn, book.title, book.author, book.year, book.available)
+		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", book.isbn, book.title, book.author, book.year, book.available)
 	}
 }
 
 func listBooks() {
 	fmt.Println("Displaying all books")
-	for i, b := range books {
-		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", i, b.title, b.author, b.year, b.available)
+	for isbn, book := range books {
+		fmt.Printf("Key: %s -> {Title: %s, Author: %s, Year: %s, Available: %t}\n", isbn, book.title, book.author, book.year, book.available)
 	}
 }
 
@@ -90,10 +91,10 @@ func borrowBook(parts []string) {
 
 	if book, ok := books[isbn]; ok {
 		book.available = false
+		fmt.Println("Book borrowed: ", book.title)
 	} else {
 		fmt.Println("Book does not exist")
 	}
-	fmt.Println("Book borrowed: ", books[isbn].title)
 }
 
 func returnBook(parts []string) {
@@ -106,10 +107,10 @@ func returnBook(parts []string) {
 
 	if book, ok := books[isbn]; ok {
 		book.available = true
+		fmt.Println("Book Returned: ", book.title)
 	} else {
 		fmt.Println("Book does not exist")
 	}
-	fmt.Println("Book Returned: ", books[isbn].title)
 }
 
 func main() {
@@ -124,7 +125,11 @@ func main() {
 		if line == "" {
 			continue
 		}
-		//text := strings.Fields(line)
+		text, err := shlex.Split(line)
+		if err != nil {
+			fmt.Println("parse error:", err)
+			continue
+		}
 		cmd := text[0]
 
 		switch cmd {
